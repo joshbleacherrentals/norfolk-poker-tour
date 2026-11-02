@@ -1,0 +1,21 @@
+node_modules/
+dist/
+*.tsbuildinfo
+.DS_Store
+
+# Secrets / local config
+.env
+.env.*
+!.env.example
+
+# Database backups and seed data hold real registrant PII and admin password hashes
+backup.dump
+*.dump
+supabase/seed.sql
+
+# Original Replit download
+PokerRegister.zip
+
+# Supabase local state
+supabase/.temp/
+supabase/.branches/
