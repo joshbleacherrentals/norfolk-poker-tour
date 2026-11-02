@@ -3,15 +3,10 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertRegistrationSchema, insertNotificationSubscriberSchema, loginSchema, insertTournamentSchema, updateTournamentSchema, rulesSchema, createAdminSchema, chipStructureSchema, insertTournamentResultSchema } from "@shared/schema";
 import passport, { requireAuth } from "./auth";
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 import { z } from "zod";
 
-export async function registerRoutes(app: Express): Promise<Server> {
-  // Seed initial data if database is empty
-  if ('seedInitialData' in storage) {
-    await storage.seedInitialData();
-  }
-  
+export function registerRoutes(app: Express): Server {
   app.get("/api/tournaments", async (_req, res) => {
     try {
       const tournaments = await storage.getTournaments();

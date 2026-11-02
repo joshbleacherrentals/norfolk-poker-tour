@@ -19,3 +19,6 @@ PokerRegister.zip
 # Supabase local state
 supabase/.temp/
 supabase/.branches/
+
+# Vercel
+.vercel/

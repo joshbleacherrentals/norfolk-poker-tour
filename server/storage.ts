@@ -1,6 +1,6 @@
 import { type Tournament, type InsertTournament, type UpdateTournament, type Registration, type InsertRegistration, type NotificationSubscriber, type InsertNotificationSubscriber, type AdminUser, type InsertAdminUser, type TournamentRules, type RulesData, type ChipStructureData, type TournamentResult, type InsertTournamentResult } from "@shared/schema";
 import { randomUUID } from "crypto";
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 import { db } from "./db";
 import * as schema from "@shared/schema";
 import { and, eq, inArray, sql } from "drizzle-orm";

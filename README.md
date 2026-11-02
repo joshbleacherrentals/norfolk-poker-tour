@@ -71,3 +71,30 @@ trust store. Use one of:
 - `?sslmode=no-verify` — encrypted, but the server certificate is not verified.
 - `?sslmode=verify-full&sslrootcert=/path/to/supabase-ca.crt` — verified; download the certificate
   from Project Settings -> Database -> SSL Configuration.
+
+## Deploying to Vercel
+
+Vercel serves the client from its CDN and runs the Express server as one serverless function.
+`vercel.json` sets the framework to "Other" and the build command to `npm run build:vercel`, which
+runs [`scripts/build-vercel.mjs`](scripts/build-vercel.mjs): it builds the client, bundles the server
+(entry: `server/vercel.ts`) into a single file, and writes Vercel's
+[Build Output](https://vercel.com/docs/build-output-api) to `.vercel/output`.
+
+Vercel's zero-config Express support is deliberately not used: it compiles TypeScript file by file
+without bundling, which breaks this project's extensionless imports and the `@shared` path alias,
+and it can't serve a client that is built during the same step. For the same reason the server uses
+`bcryptjs` (pure JavaScript) rather than native `bcrypt`, so the bundle has no native modules.
+
+1. Push the repo to GitHub, then in Vercel choose **Add New -> Project** and import it. Leave the
+   build settings alone; they come from `vercel.json`.
+2. Add environment variables (Project Settings -> Environment Variables):
+   - `DATABASE_URL`: the **transaction pooler** string (port 6543, dashboard -> Connect), plus an SSL
+     mode as described above. Serverless instances are short-lived and numerous, so use the
+     transaction pooler rather than the session pooler.
+   - `SESSION_SECRET`: a long random value, e.g. `openssl rand -hex 32`.
+3. Deploy. Later pushes to `main` redeploy automatically. Apply database migrations separately with
+   `npx supabase db push --remote`; deploying doesn't touch the database.
+
+`npm run build:vercel` writes the same output locally (`.vercel/output`, gitignored), and
+`npx vercel build` runs Vercel's own pipeline against it. For hosts that run a long-lived Node
+process (Render, Railway, Fly), use `npm run build` and `npm start` instead.
