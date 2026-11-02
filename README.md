@@ -7,7 +7,8 @@ Supabase (Postgres) database. See [replit.md](replit.md) for product notes.
 
 - Node 20+ and npm
 - Docker (running)
-- [Supabase CLI](https://supabase.com/docs/guides/cli)
+- [Supabase CLI](https://supabase.com/docs/guides/cli) v3, pinned in `devDependencies`: use the `npm run db:*`
+  scripts or `npx supabase ...` (a global install isn't needed, and an older global CLI can't read `config.toml`)
 
 ## First-time setup
 
@@ -46,11 +47,27 @@ password hash. `npm run db:reset` loads it if the file exists and otherwise leav
 
 ## Hosted Supabase
 
+In CLI v3, `db push` targets the **local** database unless you pass `--remote`.
+
 ```bash
-supabase login
-supabase link --project-ref <ref>
-supabase db push          # applies supabase/migrations to the hosted project
+npx supabase login                          # or export SUPABASE_ACCESS_TOKEN=...
+npx supabase link --project-ref <ref>
+npx supabase db push --remote --dry-run     # preview
+npx supabase db push --remote               # applies supabase/migrations to the hosted project
 ```
 
-Set `DATABASE_URL` (and `SESSION_SECRET`) in your hosting environment to the hosted connection
-string, with `?sslmode=require`.
+Load existing data once (`seed.sql` is gitignored, so it only exists on a machine that has it). Use
+the **session pooler** connection string from the dashboard's Connect button:
+
+```bash
+psql "<session pooler connection string>" -v ON_ERROR_STOP=1 --single-transaction -f supabase/seed.sql
+```
+
+Set `DATABASE_URL` (the same session pooler string) and `SESSION_SECRET` in your hosting
+environment, plus an SSL mode. `node-postgres` treats `?sslmode=require` as full certificate
+verification, and Supabase's certificate is signed by its own CA, which isn't in Node's default
+trust store. Use one of:
+
+- `?sslmode=no-verify` — encrypted, but the server certificate is not verified.
+- `?sslmode=verify-full&sslrootcert=/path/to/supabase-ca.crt` — verified; download the certificate
+  from Project Settings -> Database -> SSL Configuration.
