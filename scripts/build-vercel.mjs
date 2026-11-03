@@ -1,8 +1,11 @@
 // Builds the app for Vercel using the Build Output API (https://vercel.com/docs/build-output-api):
 //   .vercel/output/static/              the Vite client, served from Vercel's CDN
-//   .vercel/output/functions/index.func a single self-contained bundle of the Express server
+//   .vercel/output/functions/server.func a single self-contained bundle of the Express server
 //   .vercel/output/config.json          routing: static files first, /api/* to the function,
 //                                       everything else to index.html (client-side routes)
+//
+// The function is deliberately not called "index": a function named index.func is also served at
+// "/", where it shadows the client's index.html.
 //
 // Vercel's zero-config Express support compiles TypeScript file by file without bundling, which
 // breaks this project's extensionless imports and the "@shared" path alias, and it cannot serve a
@@ -12,7 +15,7 @@ import { cp, mkdir, rm, writeFile } from "node:fs/promises";
 import { build } from "esbuild";
 
 const out = ".vercel/output";
-const func = `${out}/functions/index.func`;
+const func = `${out}/functions/server.func`;
 
 await rm(out, { recursive: true, force: true });
 
@@ -63,10 +66,10 @@ await writeFile(
       routes: [
         { handle: "filesystem" },
         {
-          // Send API calls to the function, keeping the original path for Express's router.
+          // Send API calls to the function. The rewrite replaces the path the function sees, so the
+          // real one travels in __path and server/vercel.ts puts it back before Express routes it.
           src: "/api/(.*)",
-          dest: "/",
-          transforms: [{ type: "request.path", op: "set", args: "/api/$1" }],
+          dest: "/server?__path=$1",
         },
         { src: "/(.*)", dest: "/index.html" },
       ],
